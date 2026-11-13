@@ -184,13 +184,14 @@ nav.tabs svg{width:24px;height:24px}
 .listek .streak{display:inline-block;margin-top:10px;font-weight:700;font-size:14.5px;background:rgba(255,255,255,.55);border-radius:8px;padding:4px 10px}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .listek{background:#EBCB5E}}
 :root[data-theme="dark"] .listek{background:#EBCB5E}
+.listek .motto{margin:12px 0 0;font-size:17.5px;font-weight:600;line-height:1.35}
 .listek .od{margin:14px 0 0;padding-top:10px;border-top:1.5px dashed rgba(59,47,6,.25);font-size:14.5px;color:rgba(59,47,6,.8)}
 .fld{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .fld input{width:120px;font:inherit;font-size:17px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);text-align:right}
 .police{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 6px}
 .police .cell{min-height:78px;align-items:flex-start}
 .police .cell .em{font-size:24px}
-.callout{--c:#4656D2;background:color-mix(in srgb,var(--c) var(--tint),var(--surface));border-top:9px solid var(--c);border-radius:12px;padding:18px 16px;margin-top:22px}
+.callout{--c:#4656D2;background:color-mix(in srgb,var(--c) var(--tint),var(--surface));border-radius:14px;padding:18px 16px;margin-top:22px}
 .callout h2{margin:0 0 6px}
 .callout p{color:var(--muted);margin:0 0 16px}
 .empty p{color:var(--muted);margin:8px 0 18px}
@@ -487,10 +488,25 @@ function vyberTydne(k) {
 /* =====================================================================
    OBRAZOVKY
    ===================================================================== */
+// Motivační věta na lísteček, jedna na každý den v týdnu
+const MOTTA = [
+  'Krabičky jsou hotové. Dneska stačí otevřít lednici.',
+  'Každá krabička je jedno rozhodnutí, které už dneska nemusíš dělat.',
+  'Dnes večer vaření a do neděle máš klid.',
+  'Půlka týdne za tebou a pořád podle plánu. To se počítá.',
+  'Víkend bez otázky „co budu jíst?“. O to se postaral nedělní plán.',
+  'Zítra večer patnáct minut a celý příští týden je vyřešený.',
+  'Dnes je plánovací večer. Patnáct minut teď ušetří sedm večerů vymýšlení.',
+];
+function motto() {
+  if (!maPlan(TENTO) && DEN < 4) return 'Nikdy není pozdě. Naplánuj zbytek týdne a zítra už nevymýšlíš.';
+  return MOTTA[DEN];
+}
+
 function vDnes() {
   const ser = serie();
   let o = `<header class="listek"><h1>${NASTAVENI.pozdrav}</h1>
-    <p class="sub">${DNY[DEN].toLowerCase()} ${kr(DNES)}</p>${ser >= 2 ? `<span class="streak">${ser}. týden v řadě s plánem</span>` : ''}
+    <p class="sub">${DNY[DEN].toLowerCase()} ${kr(DNES)}</p><p class="motto">${motto()}</p>${ser >= 2 ? `<span class="streak">${ser}. týden v řadě s plánem</span>` : ''}
     <p class="od">Tuhle aplikaci pro vás udělala ${NASTAVENI.autor}.</p></header>`;
   if (!stav.cil) o += `<div class="callout" style="--c:#E0A408;margin:0 0 26px"><h2>Nastav si denní cíl</h2><p>Kolik kalorií a makroživin denně chceš. Podle toho ti aplikace ukáže, jestli jídla na den sedí.</p>
     <button class="btn" data-a="cil">Nastavit cíl</button></div>`;
