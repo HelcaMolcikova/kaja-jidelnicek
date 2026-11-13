@@ -6,10 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Kajin týden">
+<meta name="apple-mobile-web-app-title" content="Týden v lednici">
 <meta name="theme-color" content="#F1F4F3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111917" media="(prefers-color-scheme: dark)">
-<title>Kajin týden</title>
+<title>Týden v lednici</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -184,6 +184,9 @@ nav.tabs svg{width:24px;height:24px}
 .listek .streak{display:inline-block;margin-top:10px;font-weight:700;font-size:14.5px;background:rgba(255,255,255,.55);border-radius:8px;padding:4px 10px}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .listek{background:#EBCB5E}}
 :root[data-theme="dark"] .listek{background:#EBCB5E}
+.listek .od{margin:14px 0 0;padding-top:10px;border-top:1.5px dashed rgba(59,47,6,.25);font-size:14.5px;color:rgba(59,47,6,.8)}
+.fld{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.fld input{width:120px;font:inherit;font-size:17px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);text-align:right}
 .police{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 6px}
 .police .cell{min-height:78px;align-items:flex-start}
 .police .cell .em{font-size:24px}
@@ -209,10 +212,10 @@ nav.tabs svg{width:24px;height:24px}
    NASTAVENÍ - tady se personalizuje
    ===================================================================== */
 const NASTAVENI = {
-  jmeno: 'Kája',
-  osloveni: 'Kájo',
-  // Denní cíl - zatím ukázka, doplnit podle Kaji
-  cil: { kcal: 1900, b: 120, s: 200, t: 65, ukazka: true },
+  pozdrav: 'Ahoj holky',
+  autor: 'Helča',
+  // Výchozí denní cíl, než si ho každá nastaví v aplikaci (ukládá se v jejím telefonu)
+  cil: { kcal: 1900, b: 120, s: 200, t: 65 },
   // Která jídla dne se plní z vaření do zásoby
   hlavniSloty: ['obed', 'vecere'],
   // Vaření do zásoby: den vaření (-1 = neděle před týdnem, 0 = pondělí ... 6 = neděle) a dny, které pokryje
@@ -287,7 +290,7 @@ const S = {
 const ODDELENI = ['Ovoce a zelenina', 'Maso a ryby', 'Mléčné a vejce', 'Pečivo', 'Trvanlivé', 'Konzervy', 'Mražené', 'Koření a doma'];
 
 /* =====================================================================
-   RECEPTY - zatím UKÁZKOVÉ, nahradíme Kajinými
+   RECEPTY - zatím UKÁZKOVÉ, nahradíme recepty od holek
    typ: snidane | hlavni | zachranne
    porce = pro kolik porcí jsou suroviny; cas v minutách
    lednice = kolik dní vydrží; mrazak = jde zamrazit
@@ -371,6 +374,7 @@ function nacti() {
   return { tydny: {}, sablony: [], hodnoceni: {} };
 }
 let stav = nacti();
+function cil() { return stav.cil || NASTAVENI.cil; }
 function uloz() { try { localStorage.setItem(KLIC, JSON.stringify(stav)); } catch (e) {} }
 
 /* --- data --- */
@@ -436,7 +440,7 @@ function dnyBaleni(t) {
   }));
 }
 function denZiviny(den) { const s = [0, 0, 0, 0]; SLOTY.forEach(sl => { const x = den[sl]; if (x) ziviny(x.id).forEach((v, i) => s[i] += v); }); return s; }
-function mimoCil(kcal) { const c = NASTAVENI.cil.kcal; return kcal > c * 1.08 || kcal < c * .85; }
+function mimoCil(kcal) { const c = cil().kcal; return kcal > c * 1.08 || kcal < c * .85; }
 
 /* --- nákup --- */
 function nakup(t) {
@@ -472,7 +476,7 @@ function serie() { let n = 0, k = maPlan(PRISTI) ? PRISTI : TENTO; while (maPlan
 
 /* --- komponenty --- */
 function soucet(z) {
-  const c = NASTAVENI.cil; const pct = Math.min(100, z[0] / c.kcal * 100);
+  const c = cil(); const pct = Math.min(100, z[0] / c.kcal * 100);
   return `<div class="meter ${mimoCil(z[0]) ? 'off' : ''}"><i style="width:${pct}%"></i></div>
     <div class="mac"><span><b>${cislo(z[0])}</b> z ${cislo(c.kcal)} kcal</span><span>bílkoviny <b>${cislo(z[1])}</b>/${c.b} g</span><span>sacharidy <b>${cislo(z[2])}</b>/${c.s} g</span><span>tuky <b>${cislo(z[3])}</b>/${c.t} g</span></div>`;
 }
@@ -485,8 +489,11 @@ function vyberTydne(k) {
    ===================================================================== */
 function vDnes() {
   const ser = serie();
-  let o = `<header class="listek"><h1>Ahoj, ${NASTAVENI.osloveni}</h1>
-    <p class="sub">${DNY[DEN].toLowerCase()} ${kr(DNES)}</p>${ser >= 2 ? `<span class="streak">${ser}. týden v řadě s plánem</span>` : ''}</header>`;
+  let o = `<header class="listek"><h1>${NASTAVENI.pozdrav}</h1>
+    <p class="sub">${DNY[DEN].toLowerCase()} ${kr(DNES)}</p>${ser >= 2 ? `<span class="streak">${ser}. týden v řadě s plánem</span>` : ''}
+    <p class="od">Tuhle aplikaci pro vás udělala ${NASTAVENI.autor}.</p></header>`;
+  if (!stav.cil) o += `<div class="callout" style="--c:#E0A408;margin:0 0 26px"><h2>Nastav si denní cíl</h2><p>Kolik kalorií a makroživin denně chceš. Podle toho ti aplikace ukáže, jestli jídla na den sedí.</p>
+    <button class="btn" data-a="cil">Nastavit cíl</button></div>`;
   const polK = maPlan(TENTO) ? TENTO : maPlan(PRISTI) ? PRISTI : null;
   if (polK) {
     const tp = stav.tydny[polK], mp = barvy(tp), jidla = Object.keys(mp);
@@ -534,7 +541,8 @@ function vDnes() {
       <button class="btn" data-a="nakup-pristi">Otevřít nákupní seznam</button></div>`;
   }
 
-  o += `<p class="small muted" style="margin-top:28px">Dnes plán nevyšel? <button class="link" data-a="zachrana">Záchranná jídla ze zásob</button></p>`;
+  o += `<p class="small muted" style="margin-top:28px">Dnes plán nevyšel? <button class="link" data-a="zachrana">Záchranná jídla ze zásob</button></p>
+    ${stav.cil ? `<p class="small muted">Tvůj denní cíl: ${cislo(cil().kcal)} kcal. <button class="link" data-a="cil">Změnit</button></p>` : ''}`;
   return o;
 }
 
@@ -622,7 +630,7 @@ function vPrehled(k, t) {
 
   const prumer = r.map(denZiviny).reduce((a, z) => a.map((v, i) => v + z[i] / 7), [0, 0, 0, 0]);
   o += `<h3 style="margin:24px 0 0">Průměrný den</h3><div class="sum">${soucet(prumer)}</div>`;
-  if (NASTAVENI.cil.ukazka) o += `<p class="tiny muted">Denní cíl je zatím ukázkový, doplníme ho podle tebe.</p>`;
+  if (!stav.cil) o += `<p class="small muted">Denní cíl je zatím jen ukázkový. <button class="link" data-a="cil">Nastav si svůj</button></p>`;
 
   o += `<h2>Kdy vaříš</h2>`;
   NASTAVENI.vareni.forEach((_, b) => { o += kartaVareni(k, b, false); });
@@ -660,7 +668,7 @@ function vNakup() {
 
 function vRecepty() {
   const f = ui.filtr;
-  let o = `<header class="top"><h1>Recepty</h1><p class="sub">Zatím ukázkové, brzy tu budou tvoje.</p></header>
+  let o = `<header class="top"><h1>Recepty</h1><p class="sub">Zatím ukázkové, brzy tu budou ty vaše.</p></header>
     <div class="seg" style="flex-wrap:wrap">${['vse', 'snidane', 'hlavni', 'zachranne'].map(x => `<button class="${f === x ? 'on' : ''}" data-a="filtr:${x}">${x === 'vse' ? 'Vše' : TYP_N[x]}</button>`).join('')}</div>`;
   ['snidane', 'hlavni', 'zachranne'].filter(x => f === 'vse' || f === x).forEach(typ => {
     o += `<h2>${TYP_N[typ]}</h2>`;
@@ -691,6 +699,14 @@ function sheetRecept(id, porce) {
     <div class="rate" style="margin:18px 0 0"><span class="muted" style="flex:1">Uvařit znovu?</span>
       <button class="${hodn(id) > 0 ? 'on' : ''}" data-a="hodnotit:${id}:1">Ano</button><button class="${hodn(id) < 0 ? 'on' : ''}" data-a="hodnotit:${id}:-1">Ne</button></div>`;
 }
+function sheetCil() {
+  const c = cil();
+  const pole = [['kcal', 'Kalorie', 'kcal'], ['b', 'Bílkoviny', 'g'], ['s', 'Sacharidy', 'g'], ['t', 'Tuky', 'g']];
+  return `<div class="lidbar" style="--c:#E0A408"></div><button class="x" data-a="zavrit" aria-label="Zavřít">✕</button>
+    <h2 style="margin:0 44px 6px 0">Tvůj denní cíl</h2><p class="small muted" style="margin:0 0 8px">Podle něj aplikace ukazuje, jestli jídla na den sedí. Ukládá se jen v tomhle telefonu.</p>
+    ${pole.map(([k, n, j]) => `<label class="fld"><span>${n} <span class="muted">(${j})</span></span><input id="cil-${k}" type="number" inputmode="numeric" min="1" value="${stav.cil ? c[k] : ''}" placeholder="${NASTAVENI.cil[k]}"></label>`).join('')}
+    <div style="margin-top:20px"><button class="btn" data-a="ulozit-cil">Uložit cíl</button></div>`;
+}
 function sheetSlot(kk) {
   const [d, s] = kk.split('-'); const t = stav.tydny[ui.tyden]; const m = barvy(t);
   const x = rozpis(t)[+d][s];
@@ -714,7 +730,7 @@ function sheetSlot(kk) {
 function render() {
   $('#view').innerHTML = { dnes: vDnes, tyden: vTyden, nakup: vNakup, recepty: vRecepty }[ui.tab]();
   document.querySelectorAll('nav.tabs button').forEach(b => { const on = b.dataset.a === 'tab:' + ui.tab; b.classList.toggle('on', on); b.setAttribute('aria-current', on ? 'page' : 'false'); });
-  if (ui.sheet) { $('#panel').innerHTML = ui.sheet.typ === 'recept' ? sheetRecept(ui.sheet.id, ui.sheet.porce) : sheetSlot(ui.sheet.kk); $('#sheet').classList.add('open'); }
+  if (ui.sheet) { $('#panel').innerHTML = ui.sheet.typ === 'recept' ? sheetRecept(ui.sheet.id, ui.sheet.porce) : ui.sheet.typ === 'cil' ? sheetCil() : sheetSlot(ui.sheet.kk); $('#sheet').classList.add('open'); }
   else $('#sheet').classList.remove('open');
 }
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2400); }
@@ -737,7 +753,7 @@ document.addEventListener('click', e => {
       t().zmeny = {}; uloz(); break;
     }
     case 'krok': ui.krok = +p[0]; nahoru(); break;
-    case 'hotovo': t().hotovo = true; uloz(); ui.tab = 'nakup'; nahoru(); toast(`Týden je naplánovaný, ${NASTAVENI.osloveni}. Teď nákup.`); break;
+    case 'hotovo': t().hotovo = true; uloz(); ui.tab = 'nakup'; nahoru(); toast('Týden je naplánovaný. Teď nákup.'); break;
     case 'upravit': t().hotovo = false; ui.krok = 0; uloz(); nahoru(); break;
     case 'slot': ui.sheet = { typ: 'slot', kk: p[0] }; break;
     case 'zmena': t().zmeny[p[0]] = p[1]; uloz(); ui.sheet = null; break;
@@ -745,6 +761,13 @@ document.addEventListener('click', e => {
     case 'recept': ui.sheet = { typ: 'recept', id: p[0], porce: +(p[1] || R[p[0]].porce) }; break;
     case 'porce': ui.sheet = { typ: 'recept', id: p[0], porce: +p[1] }; break;
     case 'zavrit': ui.sheet = null; break;
+    case 'cil': ui.sheet = { typ: 'cil' }; break;
+    case 'ulozit-cil': {
+      const v = {}; let ok = true;
+      ['kcal', 'b', 's', 't'].forEach(k => { const n = parseInt(document.getElementById('cil-' + k).value || NASTAVENI.cil[k], 10); if (!(n > 0)) ok = false; v[k] = n; });
+      if (!ok) { toast('Vyplň kladná čísla.'); return; }
+      stav.cil = v; uloz(); ui.sheet = null; toast('Cíl je uložený.'); break;
+    }
     case 'snedeno': { const tt = tyden(TENTO); tt.snedeno[p[0]] = !tt.snedeno[p[0]]; uloz(); break; }
     case 'hodnotit': stav.hodnoceni[p[0]] = hodn(p[0]) === +p[1] ? 0 : +p[1]; uloz(); if (+p[1] > 0) toast('Uloženo, při plánování ho uvidíš nahoře.'); break;
     case 'koupeno': t().nakup[p[0]] = !t().nakup[p[0]]; uloz(); break;
