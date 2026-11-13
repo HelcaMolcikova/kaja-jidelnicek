@@ -174,6 +174,22 @@ nav.tabs svg{width:24px;height:24px}
   padding:12px 16px;border-radius:12px;font-weight:600;font-size:15px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none;text-align:center}
 .toast.on{opacity:1}
 .empty{padding:20px 0}
+/* lísteček na lednici */
+.listek{position:relative;background:#FFE27A;color:#3B2F06;border-radius:3px 3px 22px 3px;padding:30px 20px 18px;margin:10px 6px 26px;transform:rotate(-1.4deg);
+  box-shadow:0 1px 0 rgba(0,0,0,.05),0 12px 26px -8px rgba(70,55,0,.35)}
+.listek::before{content:"";position:absolute;top:-11px;left:calc(50% - 12px);width:24px;height:24px;border-radius:50%;background:#E4572E;
+  box-shadow:inset -3px -4px 0 rgba(0,0,0,.18),0 3px 6px rgba(0,0,0,.25)}
+.listek h1{color:#3B2F06}
+.listek .sub{color:rgba(59,47,6,.78);margin-top:6px}
+.listek .streak{display:inline-block;margin-top:10px;font-weight:700;font-size:14.5px;background:rgba(255,255,255,.55);border-radius:8px;padding:4px 10px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .listek{background:#EBCB5E}}
+:root[data-theme="dark"] .listek{background:#EBCB5E}
+.police{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 6px}
+.police .cell{min-height:78px;align-items:flex-start}
+.police .cell .em{font-size:24px}
+.callout{--c:#4656D2;background:color-mix(in srgb,var(--c) var(--tint),var(--surface));border-top:9px solid var(--c);border-radius:12px;padding:18px 16px;margin-top:22px}
+.callout h2{margin:0 0 6px}
+.callout p{color:var(--muted);margin:0 0 16px}
 .empty p{color:var(--muted);margin:8px 0 18px}
 </style>
 </head>
@@ -469,8 +485,14 @@ function vyberTydne(k) {
    ===================================================================== */
 function vDnes() {
   const ser = serie();
-  let o = `<header class="top"><h1>Ahoj, ${NASTAVENI.osloveni}</h1>
-    <p class="sub">${DNY[DEN].toLowerCase()} ${kr(DNES)}${ser >= 2 ? `, ${ser}. týden v řadě s plánem` : ''}</p></header>`;
+  let o = `<header class="listek"><h1>Ahoj, ${NASTAVENI.osloveni}</h1>
+    <p class="sub">${DNY[DEN].toLowerCase()} ${kr(DNES)}</p>${ser >= 2 ? `<span class="streak">${ser}. týden v řadě s plánem</span>` : ''}</header>`;
+  const polK = maPlan(TENTO) ? TENTO : maPlan(PRISTI) ? PRISTI : null;
+  if (polK) {
+    const tp = stav.tydny[polK], mp = barvy(tp), jidla = Object.keys(mp);
+    o += `<h3 style="margin:0 0 10px">${polK === TENTO ? 'Tento týden v lednici' : 'Příští týden v lednici'}</h3><div class="police">` +
+      jidla.map(id => `<button class="cell" style="--c:${mp[id]}" data-a="recept:${id}"><span class="em" aria-hidden="true">${R[id].em}</span><span class="cn">${esc(kratce(id))}</span></button>`).join('') + `</div>`;
+  }
 
   const vareniDnes = [];
   if (maPlan(TENTO)) NASTAVENI.vareni.forEach((v, b) => { if (v.denVareni === DEN) vareniDnes.push({ k: TENTO, b }); });
@@ -491,7 +513,7 @@ function vDnes() {
     });
     o += `<div class="sum">${soucet(denZiviny(den))}</div>`;
   } else if (DEN < 4) {
-    o += `<div class="empty"><h2 style="margin-top:0">Tenhle týden ještě nemáš naplánovaný</h2><p>Vybereš snídaně a čtyři jídla, zbytek spočítá aplikace. Zabere to asi 15 minut.</p>
+    o += `<div class="callout" style="--c:#E4572E"><h2>Tenhle týden ještě nemáš naplánovaný</h2><p>Vybereš snídaně a čtyři jídla, zbytek spočítá aplikace. Zabere to asi 15 minut.</p>
       <button class="btn" data-a="planovat:${TENTO}">Naplánovat tento týden</button></div>`;
   }
 
@@ -505,10 +527,10 @@ function vDnes() {
   }
 
   if (DEN >= 4 && !maPlan(PRISTI)) {
-    o += `<div class="empty"><h2>Naplánuj si příští týden</h2><p>Udělej to dnes nebo v neděli, ať máš v pondělí nakoupeno a uvařeno.</p>
+    o += `<div class="callout" style="--c:#E4572E"><h2>Naplánuj si příští týden</h2><p>Udělej to dnes nebo v neděli, ať máš v pondělí nakoupeno a uvařeno.</p>
       <button class="btn" data-a="planovat:${PRISTI}">Naplánovat ${rozsah(PRISTI)}</button></div>`;
   } else if (DEN >= 4 && DEN < 6 && maPlan(PRISTI)) {
-    o += `<div class="empty"><h2>Příští týden máš naplánovaný</h2><p>Do neděle nakoupit, v neděli večer vaříš.</p>
+    o += `<div class="callout" style="--c:#2E9A5A"><h2>Příští týden máš naplánovaný</h2><p>Do neděle nakoupit, v neděli večer vaříš.</p>
       <button class="btn" data-a="nakup-pristi">Otevřít nákupní seznam</button></div>`;
   }
 
